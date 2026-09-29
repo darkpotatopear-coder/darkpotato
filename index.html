@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#5B21B6" />
+  <meta name="description" content="The Dark Potato and The Pear — a pass-the-phone bluffing game for 4–12 players." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <script src="js/lib/tailwind-play.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+  <title>Da most aura</title>
+</head>
+<body class="bg-stone-50 min-h-screen flex items-center justify-center">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SCREENS. Every <section id="screen-…"> is a screen (showScreen finds them).
+       Every gameplay screen is built as THE STACK:
+         <section> centres one column  →  Header / Stage / Controls as siblings.
+       Never split Header and Controls into separate wrappers, never use my-auto,
+       never h-screen + flex-1. See CLAUDE.md § The Stack.
+  ════════════════════════════════════════════════════════════════════════ -->
+
+  <!-- MENU — the home page. Content-height section (no min-h-screen) so the 🔊
+       sits just above the title instead of at the top of the window. -->
+  <section id="screen-menu" style="display:none"
+    class="relative flex flex-col items-center justify-center px-6 py-12 w-full max-w-sm mx-auto text-center gap-6">
+    <button class="btn-open-sound absolute top-4 right-4 text-2xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+    <div class="aura-glow text-7xl" role="img" aria-label="The Dark Potato">🥔</div>
+    <div>
+      <h1 class="text-5xl font-bold leading-tight text-stone-800">Da most</h1>
+      <h1 class="text-5xl font-bold leading-tight brand-text">aura</h1>
+      <p class="text-stone-400 text-base mt-1">The Dark Potato and The Pear</p>
+    </div>
+    <div class="flex flex-col gap-3 w-full">
+      <button id="btn-menu-play" class="gel-btn brand-cta min-h-14 w-full rounded-2xl text-xl font-semibold">Let's Play</button>
+      <button id="btn-menu-how-to" class="gel-btn min-h-14 w-full rounded-2xl bg-stone-700 hover:bg-stone-800 text-white text-xl font-semibold">How to Play</button>
+      <button id="btn-menu-settings" class="gel-btn gel-btn-light brand-tint min-h-14 w-full rounded-2xl text-xl font-semibold">Settings</button>
+    </div>
+  </section>
+
+  <!-- SETUP — the host's controls: how many, who, Sylly Mode, how many Dark Potatoes -->
+  <section id="screen-setup" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-5">
+      <div class="flex items-center justify-between">
+        <button id="btn-setup-back" class="text-stone-500 font-bold text-xl min-h-11 min-w-11 text-left active:scale-90 transition-transform duration-100" aria-label="Back">←</button>
+        <p class="text-stone-500 text-sm font-semibold uppercase tracking-widest">Who's Playing?</p>
+        <button class="btn-open-sound text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-stone-800">Set the Kitchen</h2>
+        <p class="text-stone-400 text-sm mt-1">The host sets this up. Use your real names.</p>
+      </div>
+      <div>
+        <p class="text-stone-600 text-sm font-semibold mb-2">Players</p>
+        <div id="setup-count-pills" class="grid grid-cols-5 gap-2"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-stone-800 font-semibold">🤪 Sylly Mode</p>
+          <button id="btn-setup-sylly" class="toggle-off">OFF</button>
+        </div>
+        <p id="setup-sylly-note" class="text-stone-400 text-sm"></p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <p class="text-stone-800 font-semibold">🥔 Dark Potatoes</p>
+          <p id="setup-dp-count" class="text-2xl font-bold brand-text"></p>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-setup-dp-less" class="min-h-11 min-w-11 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-600 font-bold text-xl active:scale-95 transition-transform duration-100" aria-label="One fewer Dark Potato">−</button>
+          <button id="btn-setup-dp-more" class="flex-1 min-h-11 rounded-xl brand-tint font-semibold active:scale-95 transition-transform duration-100">Add Another Imposter</button>
+        </div>
+        <p id="setup-dp-note" class="text-stone-400 text-xs"></p>
+      </div>
+
+      <p id="setup-lineup" class="text-center text-stone-600 font-semibold"></p>
+
+      <div id="setup-names" class="flex flex-col gap-2"></div>
+      <button id="btn-setup-start" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Deal the Roles</button>
+    </div>
+  </section>
+
+  <!-- INTERSTITIAL — auto-advancing beat (round intro, hiding the last private
+       screen). No buttons, so no 🔊 / ✕ — keep it ≤ ~5 s. -->
+  <section id="screen-interstitial" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-4 text-center">
+      <div id="beat-emoji" class="text-6xl" role="img" aria-hidden="true"></div>
+      <h2 id="beat-heading" class="text-3xl font-bold text-stone-800"></h2>
+      <p id="beat-sub" class="text-stone-500 text-base"></p>
+    </div>
+  </section>
+
+  <!-- PASS GATE — shown before anything private. No back button, by design. -->
+  <section id="screen-pass-gate" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-6 text-center">
+      <div class="text-6xl" role="img" aria-label="Pass the phone">📱</div>
+      <div>
+        <h2 id="gate-heading" class="text-3xl font-bold text-stone-800"></h2>
+        <p id="gate-subtext" class="text-stone-500 text-base mt-2"></p>
+      </div>
+      <button id="btn-gate-confirm" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150"></button>
+    </div>
+  </section>
+
+  <!-- PRIVATE — one player's turn: the deal card or the vote. Stage and controls
+       are re-rendered by game.js for each sub-view. -->
+  <section id="screen-private" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-4">
+      <!-- HEADER -->
+      <div class="flex items-center justify-between">
+        <p id="private-label" class="text-stone-500 text-sm font-semibold uppercase tracking-widest"></p>
+        <div class="flex items-center gap-2">
+          <button class="btn-how-to text-stone-400 font-bold text-sm min-h-11 active:scale-90 transition-transform duration-100">[?]</button>
+          <button class="btn-open-sound text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+          <button class="btn-quit text-stone-500 font-bold text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100" aria-label="Quit">✕</button>
+        </div>
+      </div>
+      <!-- STAGE -->
+      <div id="private-stage" class="flex flex-col gap-4"></div>
+      <!-- CONTROLS -->
+      <div id="private-controls" class="flex flex-col gap-3"></div>
+    </div>
+  </section>
+
+  <!-- TABLE — clue time, phone in the middle -->
+  <section id="screen-table" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-4">
+      <!-- HEADER -->
+      <div class="flex items-center justify-between">
+        <p id="table-label" class="text-stone-500 text-sm font-semibold uppercase tracking-widest"></p>
+        <div class="flex items-center gap-2">
+          <button class="btn-how-to text-stone-400 font-bold text-sm min-h-11 active:scale-90 transition-transform duration-100">[?]</button>
+          <button class="btn-open-sound text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+          <button class="btn-quit text-stone-500 font-bold text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100" aria-label="Quit">✕</button>
+        </div>
+      </div>
+      <!-- STAGE -->
+      <div class="bg-white rounded-3xl shadow-sm p-5 flex flex-col gap-3">
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-stone-800">🗣️ Clue Time</h2>
+          <p class="text-stone-500 text-sm mt-1">One clue each, out loud, in this order. Hint at your words — don't say them.</p>
+        </div>
+        <ol id="table-order" class="grid grid-cols-2 gap-1.5"></ol>
+        <p id="table-jerry" class="text-stone-500 text-sm text-center"></p>
+        <p id="table-silenced" class="text-sm text-center font-semibold brand-text"></p>
+      </div>
+      <div class="flex items-center justify-between bg-white rounded-2xl shadow-sm px-4 py-3">
+        <p id="table-timer-label" class="text-stone-500 text-sm">Then talk it out.</p>
+        <p id="table-timer" class="text-2xl font-bold text-stone-800 tabular-nums"></p>
+      </div>
+      <p id="table-roster" class="text-stone-400 text-xs text-center"></p>
+      <!-- CONTROLS -->
+      <button id="btn-table-vote" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Time to Vote</button>
+      <button id="btn-table-ghost" class="min-h-11 w-full rounded-2xl bg-stone-200 hover:bg-stone-300 text-stone-600 active:scale-95 font-semibold transition-transform duration-100">👻 Ghost Corner</button>
+    </div>
+  </section>
+
+  <!-- GHOST — spectating: every role and every whisper. Ghosts only. -->
+  <section id="screen-ghost" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-4">
+      <!-- HEADER -->
+      <div class="flex items-center justify-between">
+        <p class="text-stone-500 text-sm font-semibold uppercase tracking-widest">👻 Ghost Corner</p>
+        <div class="flex items-center gap-2">
+          <button class="btn-how-to text-stone-400 font-bold text-sm min-h-11 active:scale-90 transition-transform duration-100">[?]</button>
+          <button class="btn-open-sound text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+          <button class="btn-quit text-stone-500 font-bold text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100" aria-label="Quit">✕</button>
+        </div>
+      </div>
+      <!-- STAGE -->
+      <div class="bg-white rounded-3xl shadow-sm p-5 flex flex-col gap-2">
+        <p class="text-xs font-semibold uppercase tracking-widest brand-text">Spectating Roles</p>
+        <div id="ghost-roles" class="flex flex-col gap-1"></div>
+      </div>
+      <div class="bg-white rounded-3xl shadow-sm p-5 flex flex-col gap-2">
+        <p class="text-xs font-semibold uppercase tracking-widest brand-text">Spectating Whispers</p>
+        <div id="ghost-whispers" class="flex flex-col gap-2"></div>
+      </div>
+      <p class="text-stone-400 text-xs text-center">Ghosts don't talk. Not even a little cough.</p>
+      <!-- CONTROLS -->
+      <button id="btn-ghost-done" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Back to the Table</button>
+    </div>
+  </section>
+
+  <!-- REVEAL — public beats: Jerry's announcement, then each vote result -->
+  <section id="screen-reveal" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-4">
+      <!-- HEADER -->
+      <div class="flex items-center justify-between">
+        <p id="reveal-label" class="text-stone-500 text-sm font-semibold uppercase tracking-widest"></p>
+        <div class="flex items-center gap-2">
+          <button class="btn-how-to text-stone-400 font-bold text-sm min-h-11 active:scale-90 transition-transform duration-100">[?]</button>
+          <button class="btn-open-sound text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+          <button class="btn-quit text-stone-500 font-bold text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100" aria-label="Quit">✕</button>
+        </div>
+      </div>
+      <!-- STAGE -->
+      <div id="reveal-card" class="bg-white rounded-3xl shadow-sm px-6 py-8 flex flex-col gap-3 text-center">
+        <div id="reveal-emoji" class="text-6xl" role="img" aria-hidden="true"></div>
+        <h2 id="reveal-heading" class="text-3xl font-bold text-stone-800"></h2>
+        <p id="reveal-sub" class="text-stone-500"></p>
+      </div>
+      <!-- CONTROLS -->
+      <button id="btn-reveal-next" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Continue</button>
+    </div>
+  </section>
+
+  <!-- GAME OVER — winner, how it happened, every true role -->
+  <section id="screen-gameover" style="display:none"
+    class="flex items-center justify-center w-full min-h-screen px-5 py-8 overflow-y-auto">
+    <div class="flex flex-col w-full max-w-sm gap-4">
+      <div class="flex items-center justify-between">
+        <p class="text-stone-500 text-sm font-semibold uppercase tracking-widest">Game Over</p>
+        <div class="flex items-center gap-2">
+          <button class="btn-open-sound text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100">🔊</button>
+          <button id="btn-gameover-close" class="text-stone-500 font-bold text-xl min-h-11 min-w-11 active:scale-90 transition-transform duration-100" aria-label="Back to menu">✕</button>
+        </div>
+      </div>
+      <div class="text-center">
+        <div id="gameover-emoji" class="text-6xl" role="img" aria-hidden="true"></div>
+        <h2 id="gameover-winner" class="text-3xl font-bold text-stone-800 mt-2"></h2>
+        <p id="gameover-cause" class="text-stone-500 mt-1"></p>
+      </div>
+      <div id="gameover-roles" class="bg-white rounded-3xl shadow-sm p-4 flex flex-col gap-1"></div>
+      <button id="btn-gameover-again" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Play Again</button>
+      <button id="btn-gameover-menu" class="min-h-14 w-full rounded-2xl bg-stone-200 hover:bg-stone-300 text-stone-500 active:scale-95 text-xl font-semibold transition-transform duration-150">Back to Menu</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       OVERLAYS. Ids end in "-overlay". z-[80] quit/settings · z-[90] how-to/tip
+       · z-[110] sound (always on top).
+  ════════════════════════════════════════════════════════════════════════ -->
+
+  <!-- SETTINGS — data sheet -->
+  <div id="settings-overlay" style="display:none" class="fixed inset-0 bg-black/40 z-[80] flex overlay-data-backdrop">
+    <div class="overlay-data-inner settings-slide-up bg-stone-50 w-full max-w-sm rounded-t-3xl flex flex-col">
+      <div class="px-5 pt-5 pb-4 border-b border-stone-200 flex-shrink-0">
+        <h2 class="text-xl font-bold text-stone-800">Settings ⚙️</h2>
+        <p class="text-xs text-stone-400 mt-1">Player count, Sylly Mode and imposters are on the setup screen.</p>
+      </div>
+      <div class="flex flex-col gap-5 px-5 py-5">
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+          <div>
+            <p class="text-stone-800 font-semibold">Discussion Timer</p>
+            <p class="text-stone-400 text-sm mt-0.5">How long clue time and arguing get.</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <div class="flex gap-2">
+              <button class="pill" data-setting="timer" data-value="0">Off</button>
+              <button class="pill" data-setting="timer" data-value="120">Short</button>
+              <button class="pill" data-setting="timer" data-value="180">Normal</button>
+              <button class="pill" data-setting="timer" data-value="300">Long</button>
+            </div>
+            <p id="setting-timer-value" class="text-stone-400 text-xs"></p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-stone-800 font-semibold">Whispers</p>
+            <button id="btn-setting-whispers" class="toggle-on">ON</button>
+          </div>
+          <p class="text-stone-400 text-sm">Private notes between players. Off makes turns quicker and also removes Stalking and Impersonating.</p>
+        </div>
+        <button id="btn-settings-done" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY — data sheet -->
+  <div id="how-to-overlay" style="display:none" class="fixed inset-0 bg-black/40 z-[90] flex overlay-data-backdrop">
+    <div class="overlay-data-inner settings-slide-up bg-stone-50 w-full max-w-sm rounded-t-3xl flex flex-col">
+      <div class="px-5 pt-5 pb-4 border-b border-stone-200 flex-shrink-0">
+        <h2 class="text-xl font-bold text-stone-800">How to Play 🥔</h2>
+        <p class="text-xs text-stone-400 mt-1">The Dark Potato hunts The Pear. Everyone else hunts The Dark Potato.</p>
+      </div>
+      <div class="flex flex-col gap-4 px-5 py-5">
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">The Roles</p>
+          <ul class="flex flex-col gap-1.5 text-stone-500 text-sm">
+            <li><span class="font-semibold text-stone-700">🐭 Jerry</span> — the detective. Everyone knows who Jerry is. Sees the secret food, gives no clue, can't be voted out.</li>
+            <li><span class="font-semibold text-stone-700">🍐 The Pear</span> — the sacred one. Gets two words, and they're always the food's <span class="font-semibold text-stone-700">colour</span> and <span class="font-semibold text-stone-700">taste</span>. Don't get found.</li>
+            <li><span class="font-semibold text-stone-700">🍜 Ramen Bowls</span> — the fakes. Two other words about the food. Act like The Pear so The Dark Potato goes after you instead.</li>
+            <li><span class="font-semibold text-stone-700">🥔 The Dark Potato</span> — the imposter. No food, just mouldy cheese. Bluff, and find The Pear. Several Dark Potatoes don't know each other.</li>
+            <li><span class="font-semibold text-stone-700">💩 Diarrhea</span> — Sylly Mode only. Plays like a Ramen Bowl, can't be murdered, and can poop on a suspect.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Step 1</p>
+          <p class="font-bold text-stone-800">Get your ingredients</p>
+          <p class="text-stone-500 text-sm">Pass the phone round. Each player sees their card in secret, can send one <span class="font-semibold text-stone-700">Whisper</span>, and Dark Potatoes can use their tricks.</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Step 2</p>
+          <p class="font-bold text-stone-800">Clue time</p>
+          <p class="text-stone-500 text-sm">Phone in the middle. In the order shown, everyone except Jerry says one clue out loud about their words — without saying the words. Then argue about who's sus.</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Step 3</p>
+          <p class="font-bold text-stone-800">Vote</p>
+          <p class="text-stone-500 text-sm">Pass the phone round again. Read your whispers and vote in secret — anyone except Jerry, or <span class="font-semibold text-stone-700">Skip</span>. Someone goes out only if <span class="font-semibold text-stone-700">more than half</span> of the living players vote for them.</p>
+          <p class="text-stone-500 text-sm">Results go in this order: Jerry's shot → the vote → Diarrhea's poop → the Dark Potato's murder. Get knocked out first and your own move fizzles.</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Step 4</p>
+          <p class="font-bold text-stone-800">Repeat</p>
+          <p class="text-stone-500 text-sm">Nobody won? New food, new words, whispers wiped. Go again.</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Abilities</p>
+          <ul class="flex flex-col gap-1.5 text-stone-500 text-sm">
+            <li><span class="font-semibold text-stone-700">🐭 Ahh Shoot</span> — on the vote, Jerry can shoot instead. The community vote is skipped. Hit a Dark Potato: they die. Hit anyone else: they die and so does Jerry. One shot per Dark Potato in the game.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Murder</span> — every vote, pick someone to take out (not Jerry). Several Dark Potatoes pool their picks; most picks wins.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Eat Ramen</span> — silence someone for the round: no clue, no whisper. Once a game.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Face Reveal</span> — slip your secret food-bank word into your round-1 clue, then see one player's real role. Once a game.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Stalking</span> — read every whisper to and from one player this round.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Swapsies</span> — next round, someone's card shows a fake role and fake words. Nothing really changes.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Impersonating</span> — send a whisper that looks like it came from someone else. Even Jerry.</li>
+            <li><span class="font-semibold text-stone-700">🥔 Dark Protection</span> — Sylly Mode. Arm it; if Jerry shoots you that round and 2+ Ramen Bowls are alive, a random Ramen Bowl dies instead — and Jerry too. Once a game.</li>
+            <li><span class="font-semibold text-stone-700">💩 Get Pooped On</span> — on the vote, pick a suspect. If it's a Dark Potato, one of their abilities is gone for good. You're never told if you got it.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Deaths</p>
+          <ul class="flex flex-col gap-1.5 text-stone-500 text-sm">
+            <li><span class="font-semibold text-stone-700">Honourable Death</span> — a Ramen Bowl or Diarrhea goes out. Their role stays a mystery.</li>
+            <li><span class="font-semibold text-stone-700">Sad Death</span> — Jerry shot an innocent. They both go.</li>
+            <li><span class="font-semibold text-stone-700">Spectating</span> — ghosts can open the Ghost Corner at clue time to see every role and whisper. Ghosts don't talk.</li>
+            <li><span class="font-semibold text-stone-700">Immune</span> — you can't use abilities on ghosts.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-widest brand-text">Winning</p>
+          <ul class="list-disc pl-5 flex flex-col gap-1 text-stone-500 text-sm">
+            <li><span class="font-semibold text-stone-700">🥔 Dark Potatoes win</span> if The Pear dies — voted out (<span class="italic">The Pear Has Been Moldified</span>), murdered, or shot by Jerry (<span class="italic">The Pear Fell Into The Hands Of The Spammer</span>) — or if only one living player isn't a Dark Potato.</li>
+            <li><span class="font-semibold text-stone-700">🐭🍐🍜💩 Everyone else wins together</span> once every Dark Potato is gone. Ghosts on the team win too.</li>
+          </ul>
+        </div>
+        <button id="btn-how-to-close" class="min-h-14 w-full rounded-2xl brand-cta active:scale-95 text-xl font-semibold transition-transform duration-150">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIP — small decision modal for inline [?] help next to one ability -->
+  <div id="tip-overlay" style="display:none" class="fixed inset-0 bg-black/40 z-[90] flex overlay-modal-backdrop">
+    <div class="overlay-modal-inner bg-stone-50 w-full max-w-sm rounded-3xl px-6 pt-6 pb-8 flex flex-col gap-4 text-center border brand-border">
+      <div class="flex flex-col gap-2">
+        <p id="tip-emoji" class="text-3xl"></p>
+        <h3 id="tip-heading" class="text-lg font-bold text-stone-800"></h3>
+        <div id="tip-body" class="text-stone-500 text-sm text-left flex flex-col gap-1.5"></div>
+      </div>
+      <button id="btn-tip-close" class="min-h-11 w-full rounded-2xl bg-stone-200 hover:bg-stone-300 active:scale-95 text-stone-700 font-semibold text-sm transition-transform duration-100">Got it</button>
+    </div>
+  </div>
+
+  <!-- QUIT — decision modal. Wording is the creator's. -->
+  <div id="quit-overlay" style="display:none" class="fixed inset-0 bg-black/40 z-[80] flex overlay-modal-backdrop">
+    <div class="overlay-modal-inner bg-stone-50 w-full max-w-sm rounded-3xl px-6 pt-6 pb-8 flex flex-col gap-4 text-center border brand-border">
+      <div class="text-4xl" role="img" aria-label="Seriously?">😤</div>
+      <div>
+        <h3 class="text-xl font-bold text-stone-800">Are you serious right now?</h3>
+        <p class="text-stone-500 text-sm mt-1">Quitting ends this game for everyone.</p>
+      </div>
+      <button id="btn-quit-confirm" class="min-h-14 w-full rounded-2xl bg-red-500 hover:bg-red-600 text-white font-semibold text-lg active:scale-95 transition-transform duration-150">Yeah, I'm lagging</button>
+      <button id="btn-quit-cancel" class="min-h-14 w-full rounded-2xl bg-stone-200 hover:bg-stone-300 text-stone-700 font-semibold text-lg active:scale-95 transition-transform duration-150">I understand it now</button>
+    </div>
+  </div>
+
+  <!-- PLAY AGAIN — decision modal (never restart without asking) -->
+  <div id="again-overlay" style="display:none" class="fixed inset-0 bg-black/40 z-[80] flex overlay-modal-backdrop">
+    <div class="overlay-modal-inner bg-stone-50 w-full max-w-sm rounded-3xl px-6 pt-6 pb-8 flex flex-col gap-4 text-center border brand-border">
+      <div class="text-4xl" role="img" aria-label="Play again">🔄</div>
+      <div>
+        <h3 class="text-xl font-bold text-stone-800">Run it back?</h3>
+        <p class="text-stone-500 text-sm mt-1">Same players, brand new roles.</p>
+      </div>
+      <button id="btn-again-confirm" class="min-h-14 w-full rounded-2xl brand-cta text-white font-semibold text-lg active:scale-95 transition-transform duration-150">Deal Us In</button>
+      <button id="btn-again-cancel" class="min-h-14 w-full rounded-2xl bg-stone-200 hover:bg-stone-300 text-stone-700 font-semibold text-lg active:scale-95 transition-transform duration-150">Not yet</button>
+    </div>
+  </div>
+
+  <!-- SOUND — always on top -->
+  <div id="sound-overlay" style="display:none" class="fixed inset-0 bg-black/40 z-[110] flex overlay-modal-backdrop">
+    <div class="overlay-modal-inner bg-white w-full max-w-sm p-6 flex flex-col gap-4">
+      <h3 class="text-xl font-bold text-stone-800 text-center">🔊 Sound</h3>
+      <div class="flex items-center justify-between">
+        <p class="text-stone-800 font-semibold">Mute All</p>
+        <button id="global-mute-toggle" class="toggle-off">OFF</button>
+      </div>
+      <div id="global-volume-group">
+        <p class="text-stone-400 text-sm font-semibold mb-2">Volume — <span id="global-volume-label">60%</span></p>
+        <input id="global-sound-volume" type="range" min="0" max="100" step="10" value="60" class="brand-range w-full" />
+      </div>
+      <button id="btn-sound-done" class="min-h-14 w-full rounded-2xl bg-stone-700 hover:bg-stone-800 active:scale-95 text-white text-xl font-semibold transition-transform duration-150">Done</button>
+    </div>
+  </div>
+
+  <script src="js/engine.js"></script>
+  <script src="js/foods.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

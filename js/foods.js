@@ -1,0 +1,96 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// The food bank. Loaded after engine.js, before game.js.
+//
+// FOODS — one is picked each round. Jerry sees `name`. The Pear always gets
+// `colour` + `taste` (that's the Pear's tell). Ramen Bowls and Diarrhea get two
+// of `words` each — never a colour or a taste, never the food's own name.
+// DECOYS — what the Dark Potato's card says instead ("You got mouldy cheese").
+// FOOD_BANK — Face Reveal task words: slip one into your round-1 clue.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const FOODS = [
+  { name: 'Instant noodles', emoji: '🍜', colour: 'yellow', taste: 'salty',
+    words: ['packet', 'kettle', 'minutes', 'slurp', 'broth', 'fork', 'steam', 'curly', 'cheap', 'sachet', 'bowl', 'midnight', 'student', 'crinkle'] },
+  { name: 'Vegemite toast', emoji: '🍞', colour: 'black', taste: 'salty',
+    words: ['jar', 'knife', 'butter', 'crust', 'breakfast', 'spread', 'toaster', 'thin', 'plate', 'crumbs', 'Aussie', 'morning', 'lunchbox', 'scrape'] },
+  { name: 'Pavlova', emoji: '🍰', colour: 'white', taste: 'sweet',
+    words: ['meringue', 'Christmas', 'cream', 'berries', 'crack', 'oven', 'eggs', 'fluffy', 'dessert', 'nana', 'plate', 'party', 'whisk', 'New Zealand'] },
+  { name: 'Lamington', emoji: '🧁', colour: 'brown', taste: 'chocolatey',
+    words: ['coconut', 'sponge', 'square', 'cake stall', 'fete', 'cube', 'jam', 'sticky', 'tea', 'school', 'dunked', 'bakery', 'fingers', 'fundraiser'] },
+  { name: 'Fairy bread', emoji: '🥪', colour: 'rainbow', taste: 'sweet',
+    words: ['birthday', 'sprinkles', 'triangles', 'butter', 'party', 'kids', 'plate', 'slices', 'crunchy', 'messy', 'table', 'crusts', 'cheap', 'hundreds'] },
+  { name: 'Meat pie', emoji: '🥧', colour: 'brown', taste: 'savoury',
+    words: ['pastry', 'footy', 'sauce', 'gravy', 'servo', 'flaky', 'microwave', 'lid', 'mince', 'stadium', 'winter', 'bakery', 'paper bag', 'burnt tongue'] },
+  { name: 'Sausage sizzle', emoji: '🌭', colour: 'brown', taste: 'smoky',
+    words: ['Bunnings', 'bread', 'onions', 'tongs', 'barbecue', 'fundraiser', 'sauce', 'gold coin', 'election', 'snag', 'napkin', 'queue', 'weekend', 'grill'] },
+  { name: 'Watermelon', emoji: '🍉', colour: 'red', taste: 'sweet',
+    words: ['seeds', 'summer', 'slice', 'rind', 'spit', 'beach', 'huge', 'stripes', 'drip', 'picnic', 'wedge', 'heavy', 'pool', 'smile'] },
+  { name: 'Banana', emoji: '🍌', colour: 'yellow', taste: 'sweet',
+    words: ['peel', 'bunch', 'monkey', 'slip', 'smoothie', 'split', 'bread', 'curve', 'bruise', 'potassium', 'lunchbox', 'tree', 'phone', 'mushy'] },
+  { name: 'Popcorn', emoji: '🍿', colour: 'white', taste: 'buttery',
+    words: ['cinema', 'microwave', 'pop', 'kernel', 'bucket', 'movie', 'teeth', 'fluffy', 'handful', 'share', 'bag', 'noisy', 'trailer', 'crunch'] },
+  { name: 'Fried chicken', emoji: '🍗', colour: 'golden', taste: 'savoury',
+    words: ['bucket', 'drumstick', 'bones', 'crispy', 'finger-licking', 'colonel', 'batter', 'wings', 'napkins', 'secret recipe', 'oil', 'crunch', 'fast food', 'gravy'] },
+  { name: 'Ice cream', emoji: '🍦', colour: 'white', taste: 'sweet',
+    words: ['cone', 'scoop', 'melt', 'brain freeze', 'van', 'sprinkles', 'summer', 'lick', 'tub', 'freezer', 'drip', 'cold', 'sundae', 'waffle'] },
+  { name: 'Hot chips', emoji: '🍟', colour: 'golden', taste: 'salty',
+    words: ['vinegar', 'sauce', 'beach', 'seagull', 'fish', 'paper', 'crunchy', 'fryer', 'potato', 'steam', 'chicken salt', 'fingers', 'scoop', 'burnt'] },
+  { name: 'Dumplings', emoji: '🥟', colour: 'white', taste: 'savoury',
+    words: ['steam', 'pleats', 'dipping sauce', 'chopsticks', 'soy', 'bamboo basket', 'yum cha', 'pork', 'wrapper', 'pan fry', 'dozen', 'grandma', 'pinch', 'Lunar New Year'] },
+  { name: 'Pancakes', emoji: '🥞', colour: 'golden', taste: 'sweet',
+    words: ['flip', 'syrup', 'stack', 'pan', 'breakfast', 'batter', 'butter', 'Sunday', 'spatula', 'Shrove Tuesday', 'fluffy', 'toppings', 'berries', 'griddle'] },
+  { name: 'Cheeseburger', emoji: '🍔', colour: 'brown', taste: 'cheesy',
+    words: ['bun', 'patty', 'pickle', 'drive-thru', 'sauce', 'sesame', 'stack', 'grill', 'lettuce', 'fries', 'meal deal', 'napkin', 'bite', 'ketchup'] },
+  { name: 'Pizza', emoji: '🍕', colour: 'red', taste: 'cheesy',
+    words: ['slice', 'oven', 'delivery', 'box', 'crust', 'toppings', 'pineapple', 'Italy', 'stretchy', 'party', 'Friday', 'pepperoni', 'triangle', 'dough'] },
+  { name: 'Sushi', emoji: '🍣', colour: 'pink', taste: 'fishy',
+    words: ['rice', 'roll', 'seaweed', 'chopsticks', 'soy sauce', 'wasabi', 'train', 'Japan', 'avocado', 'raw', 'lunch', 'dip', 'tuna', 'hand roll'] },
+  { name: 'Lemon', emoji: '🍋', colour: 'yellow', taste: 'sour',
+    words: ['squeeze', 'zest', 'pip', 'lemonade', 'tree', 'pie', 'tea', 'face', 'pancake day', 'wedge', 'juice', 'peel', 'fish', 'cordial'] },
+  { name: 'Chilli', emoji: '🌶️', colour: 'red', taste: 'spicy',
+    words: ['jalapeño', 'milk', 'tears', 'sweat', 'seeds', 'curry', 'flakes', 'sauce', 'burn', 'challenge', 'pepper', 'garden', 'dare', 'runny nose'] },
+  { name: 'Honey', emoji: '🍯', colour: 'golden', taste: 'sweet',
+    words: ['bees', 'jar', 'sticky', 'drip', 'spoon', 'hive', 'bear', 'toast', 'sore throat', 'dipper', 'flowers', 'Winnie', 'comb', 'tea'] },
+  { name: 'Chocolate', emoji: '🍫', colour: 'brown', taste: 'rich',
+    words: ['block', 'Easter', 'melt', 'wrapper', 'squares', 'bunny', 'fridge', 'milk', 'advent calendar', 'chips', 'hot chocolate', 'gift', 'egg hunt', 'cocoa'] },
+  { name: 'Doughnut', emoji: '🍩', colour: 'pink', taste: 'sweet',
+    words: ['hole', 'sprinkles', 'glaze', 'ring', 'dozen', 'cinnamon', 'jam', 'cops', 'Homer', 'fryer', 'box', 'bakery', 'icing', 'dunk'] },
+  { name: 'Avocado toast', emoji: '🥑', colour: 'green', taste: 'creamy',
+    words: ['smashed', 'millennial', 'brunch', 'café', 'sourdough', 'seed', 'mortgage', 'feta', 'poached egg', 'expensive', 'ripe', 'mash', 'Sunday', 'hipster'] },
+  { name: 'Pickles', emoji: '🥒', colour: 'green', taste: 'sour',
+    words: ['jar', 'crunch', 'brine', 'burger', 'dill', 'gherkin', 'slice', 'sandwich', 'fork', 'fridge', 'deli', 'cucumber', 'spear', 'Rick'] },
+  { name: 'Corn on the cob', emoji: '🌽', colour: 'yellow', taste: 'buttery',
+    words: ['husk', 'kernels', 'teeth', 'barbecue', 'rows', 'stuck', 'holders', 'gnaw', 'farm', 'silk', 'stalk', 'boil', 'typewriter', 'summer'] },
+  { name: 'Strawberries', emoji: '🍓', colour: 'red', taste: 'sweet',
+    words: ['seeds', 'punnet', 'cream', 'picking', 'farm', 'hull', 'jam', 'dipped', 'smoothie', 'heart', 'leaves', 'Wimbledon', 'bush', 'milkshake'] },
+  { name: 'Marshmallow', emoji: '🍡', colour: 'white', taste: 'sweet',
+    words: ['campfire', 'toast', 'squishy', 'stick', 'hot chocolate', 'fluffy', 'puffy', "s'mores", 'bag', 'gooey', 'melt', 'rocky road', 'pillow', 'burn'] },
+  { name: 'Milo', emoji: '🥛', colour: 'brown', taste: 'malty',
+    words: ['tin', 'spoon', 'crunchy bits', 'milk', 'cold', 'sport', 'breakfast', 'dinosaur', 'stir', 'mug', 'scoops', 'powder', 'sprinkle', 'energy'] },
+  { name: 'Sausage roll', emoji: '🥐', colour: 'golden', taste: 'savoury',
+    words: ['pastry', 'flaky', 'bakery', 'sauce', 'party', 'mince', 'canteen', 'oven', 'crumbs', 'lunch', 'puff', 'warm', 'paper bag', 'tray'] },
+  { name: 'Curry', emoji: '🍛', colour: 'orange', taste: 'spicy',
+    words: ['rice', 'naan', 'pot', 'spices', 'takeaway', 'sweat', 'simmer', 'coconut milk', 'chicken', 'leftovers', 'smell', 'lentils', 'Friday night', 'butter chicken'] },
+  { name: 'Mango', emoji: '🥭', colour: 'orange', taste: 'sweet',
+    words: ['seed', 'summer', 'juicy', 'cheeks', 'drip', 'peel', 'tropical', 'sticky', 'box', 'Christmas', 'smoothie', 'stringy', 'pudding', 'tray'] },
+  { name: 'Tim Tam', emoji: '🍪', colour: 'brown', taste: 'chocolatey',
+    words: ['slam', 'biscuit', 'packet', 'dunk', 'straw', 'tea', 'fridge', 'share', 'layers', 'crunch', 'pantry', 'sneaky', 'last one', 'Arnott\'s'] },
+  { name: 'Spaghetti bolognese', emoji: '🍝', colour: 'red', taste: 'savoury',
+    words: ['fork', 'twirl', 'mince', 'parmesan', 'pot', 'slurp', 'sauce', 'bib', 'stain', 'Italy', 'meatballs', 'spag bol', 'drain', 'garlic bread'] },
+  { name: 'Sour lollies', emoji: '🍬', colour: 'rainbow', taste: 'sour',
+    words: ['bag', 'chewy', 'pick and mix', 'movie', 'teeth', 'fizzy', 'share', 'sticky', 'jelly', 'cinema', 'servo', 'dentist', 'stretchy', 'worms'] },
+  { name: 'Apple', emoji: '🍎', colour: 'red', taste: 'sweet',
+    words: ['core', 'teacher', 'pie', 'orchard', 'seeds', 'peel', 'bite', 'lunchbox', 'tree', 'doctor', 'cider', 'crunch', 'juice', 'bobbing'] },
+];
+
+const DECOYS = [
+  'soggy cereal', 'a sock sandwich', 'expired milk', 'burnt toast', 'three-day-old sushi',
+  'one cold chip', 'mystery meat', 'fridge smell', 'stale crackers', 'a wet sandwich',
+];
+
+const FOOD_BANK = [
+  'crumbs', 'gravy', 'sprinkles', 'soggy', 'crouton', 'drizzle', 'custard', 'noodle', 'pickle',
+  'marinade', 'lasagne', 'broccoli', 'gnocchi', 'nugget', 'jelly', 'waffle', 'porridge',
+  'meatball', 'tofu', 'kebab', 'cabbage', 'anchovy', 'sultana', 'parsnip', 'toastie', 'crumpet',
+  'sardine', 'pretzel', 'turnip', 'sauerkraut',
+];

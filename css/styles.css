@@ -1,0 +1,279 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Styles. Layout and spacing come from Tailwind classes in index.html; this
+   file holds the few things Tailwind can't: the font, the brand colour, the
+   overlay geometry, pills/toggles, the moulded menu buttons, and motion.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── The brand — change these five and the whole game re-themes ────────────
+   --brand        fills: Play button, active pills, ON toggles, slider
+   --brand-dark   hover/pressed fill
+   --brand-text   the brand as TEXT on the off-white page (often a darker shade
+                  of --brand — a colour chosen for a button fill is frequently
+                  too light to read as thin text)
+   --brand-tint   the Settings button's light fill; --brand-tint-ink its text   */
+:root {
+  --brand:          #6D28D9;
+  --brand-dark:     #5B21B6;
+  --brand-text:     #5B21B6;
+  --brand-tint:     #EDE9FE;
+  --brand-tint-ink: #4C1D95;
+  overscroll-behavior-y: none;
+}
+
+/* ── Fredoka — self-hosted (SIL Open Font Licence), works offline ─────────── */
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('../fonts/fredoka-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('../fonts/fredoka-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+body {
+  font-family: 'Fredoka', ui-rounded, system-ui, sans-serif;
+}
+
+/* ── Brand classes ────────────────────────────────────────────────────────── */
+.brand-cta           { background-color: var(--brand); color: #fff; }
+.brand-cta:hover     { background-color: var(--brand-dark); }
+.brand-text          { color: var(--brand-text); }
+.brand-tint          { background-color: var(--brand-tint); color: var(--brand-tint-ink); }
+.brand-border        { border-color: color-mix(in srgb, var(--brand) 40%, white); }
+.brand-focus:focus   { border-color: var(--brand); outline: none; }
+
+/* ── Screen entrance ──────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen-enter { animation: fadeIn 0.2s ease-out forwards; }
+
+/* ── Overlays — only two patterns exist; don't invent a third ───────────────
+   Data sheet (settings, how to play): slides up from the bottom, scrolls.
+   Decision modal (quit, play again): centred card, ≤ 3 buttons.           */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.settings-slide-up     { animation: slideUp 0.3s ease-out forwards; }
+.overlay-data-backdrop { align-items: flex-end; justify-content: center; }
+.overlay-data-inner    { height: 80vh; overflow-y: auto; }
+.overlay-modal-backdrop { align-items: center; justify-content: center; padding-left: 1.5rem; padding-right: 1.5rem; }
+.overlay-modal-inner   { border-radius: 1.5rem; }
+
+/* ── Settings pills — keep .pill on every pill; only toggle .pill-active ──── */
+.pill {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.5rem 0;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: #e7e5e4;
+  color: #78716c;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.pill.pill-active { background: var(--brand); color: #fff; }
+
+/* ── ON/OFF toggles ───────────────────────────────────────────────────────── */
+.toggle-off, .toggle-on {
+  min-height: 44px;
+  border-radius: 9999px;
+  padding: 0.4rem 1.2rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s, color 0.2s;
+}
+.toggle-off { background: #e7e5e4; color: #78716c; }
+.toggle-on  { background: var(--brand); color: #fff; }
+
+/* ── Range slider ─────────────────────────────────────────────────────────── */
+.brand-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--brand-tint), var(--brand));
+  outline: none;
+  cursor: pointer;
+}
+.brand-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.brand-range::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Moulded "keycap" buttons — the four MENU buttons only ──────────────────
+   Every layer is translucent white/black, so it sits over any fill colour.
+   Use .gel-btn-light on a pale fill (Settings, Back). Not for in-game buttons. */
+.gel-btn {
+  position: relative;
+  isolation: isolate;
+  background-image: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(0, 0, 0, 0.05) 62%,
+    rgba(0, 0, 0, 0.28) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40),
+    inset 0 -16px 20px -13px rgba(0, 0, 0, 0.40),
+    inset 0 -2px 1px rgba(0, 0, 0, 0.22),
+    0 0 0 1.5px rgba(0, 0, 0, 0.20),
+    0 5px 0 rgba(0, 0, 0, 0.20),
+    0 8px 15px rgba(0, 0, 0, 0.18);
+  transition: transform 100ms ease-out;
+}
+.gel-btn::before {
+  content: "";
+  position: absolute;
+  left: 4px; right: 4px; top: 3px;
+  height: 36%;
+  border-radius: 13px 13px 50% 50% / 11px 11px 15px 15px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.20) 62%, rgba(255, 255, 255, 0.05));
+  z-index: -1;
+  pointer-events: none;
+}
+.gel-btn::after {
+  content: "";
+  position: absolute;
+  left: 14%; right: 14%; bottom: 2px;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0) 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+.gel-btn:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40),
+    inset 0 -16px 20px -13px rgba(0, 0, 0, 0.40),
+    inset 0 -2px 1px rgba(0, 0, 0, 0.22),
+    0 0 0 1.5px rgba(0, 0, 0, 0.20),
+    0 1px 0 rgba(0, 0, 0, 0.20);
+}
+.gel-btn-light {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.04) 100%);
+}
+.gel-btn-light::before {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.12) 62%, rgba(255, 255, 255, 0.02));
+}
+.gel-btn-light::after { opacity: 0.5; }
+
+/* ── Game pieces ──────────────────────────────────────────────────────────── */
+/* The menu potato's aura */
+.aura-glow { filter: drop-shadow(0 0 18px rgba(109, 40, 217, 0.55)) drop-shadow(0 0 4px rgba(109, 40, 217, 0.4)); }
+
+/* One-of-many choice buttons on the private screen (players, Skip, Hold Off) */
+.choice {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 2px solid #e7e5e4;
+  background: #fff;
+  color: #44403c;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.choice.choice-active { border-color: var(--brand); background: var(--brand-tint); color: var(--brand-tint-ink); }
+
+/* A clue word on the deal card */
+.word-chip {
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  background: var(--brand-tint);
+  color: var(--brand-tint-ink);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.ingredients { border-top: 1px dashed #e7e5e4; }
+
+/* A Dark Potato ability on the deal card */
+.ability-row {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+  background: #f5f5f4;
+  color: #292524;
+  text-align: left;
+}
+.ability-row:active { transform: scale(0.98); }
+.ability-off { opacity: 0.5; }
+
+.whisper-line { padding: 0.5rem 0.75rem; border-radius: 0.75rem; background: #f5f5f4; overflow-wrap: anywhere; }
+.flash-line {
+  padding: 0.6rem 0.9rem;
+  border-radius: 1rem;
+  background: var(--brand-tint);
+  color: var(--brand-tint-ink);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Clue-time speaking order */
+.order-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; overflow-wrap: anywhere; padding: 0.35rem 0.5rem; border-radius: 0.75rem; background: #fafaf9; color: #292524; }
+.order-num {
+  width: 1.75rem; height: 1.75rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 9999px; background: var(--brand); color: #fff; font-weight: 700; font-size: 0.9rem;
+}
+.order-silenced { color: #a8a29e; }
+.order-silenced .flex-1 { text-decoration: line-through; }
+.order-silenced .order-num { background: #d6d3d1; }
+
+/* "You got pooped on" — fills the victim's screen */
+.poop-card { background: #78350f; color: #fff; }
+.poop-sub  { color: #fde68a; }
+
+/* Result beats and reveals pop in */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.pop-in { animation: popIn 0.25s ease-out; }
+
+/* ── Podium medal slot — reserves width on every row so text lines up ─────── */
+.medal-slot { width: 1.4rem; text-align: center; flex-shrink: 0; }
+
+/* ── Reduced motion — ONE global block. Durations go to ~0, never to `none`,
+   so animationend listeners still fire. A requestAnimationFrame animation is
+   NOT covered by this; it must check prefers-reduced-motion itself. ───────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

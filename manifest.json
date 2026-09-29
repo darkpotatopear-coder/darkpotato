@@ -1,0 +1,14 @@
+{
+  "name": "Da most aura",
+  "short_name": "Da most aura",
+  "description": "The Dark Potato and The Pear — a pass-the-phone bluffing game for 4–12 players.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAFAF9",
+  "theme_color": "#5B21B6",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
